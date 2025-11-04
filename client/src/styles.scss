@@ -1,10 +1,52 @@
 :root {
-    --app-font: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  }
+  --app-font: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+}
 
-body,html {
-    font-family: var(--app-font);
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+html, body {
+  font-family: var(--app-font);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  line-height: 1.4; /* optional, sets a consistent default */
+  font-size: 16px;
+  color: #000; /* default text color */
+  background-color: #fff; /* optional */
+}
+
+/* Make all elements inherit box-sizing */
+*, *::before, *::after {
+  box-sizing: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+/* Reset common elements */
+h1, h2, h3, h4, h5, h6, p, blockquote, dl, dd, ol, ul, figure, pre {
+  margin: 0;
+  padding: 0;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+img, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0;
+  margin: 0;
 }

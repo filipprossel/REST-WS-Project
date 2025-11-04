@@ -1,157 +1,104 @@
-import { Injectable } from '@angular/core';
+import { Injectable } from "@angular/core";
+import { EpokService, Course } from "../Epok/epok";
+import { StudentITSService, Student } from "../StudentITS/student-its";
 
-export interface Students {
-  SSN: string;
-}
-
-export interface Courses {
-  CourseCode: string;
-}
-
-export interface LadokStudentCourse {
-  Student_Course_Id: Number;
-  Student: Students;
-  Course: Courses;
-}
-
-export interface Results {
-  Result_Id: Number;
-  Student_Course: LadokStudentCourse;
+interface Grades {
   Module_Code: string;
-  Grade: 'U' | 'G' | 'VG' | '*';
-  Date: string;
-  Status: string;
+  Grade: string | null;
+  Date: Date | null;
+  Status: string | null;
 }
+
+interface Enrollment {
+  Student: Student;
+  Course: Course;
+  Grades: Grades[];
+}
+
 
 @Injectable({
   providedIn: 'root',
 })
 
 export class LadokService {
-  results: Results[] = [
-    {
-      Result_Id: 1,
-      Student_Course: {
-        Student_Course_Id: 101,
-        Student: { SSN: '19990101-1234' },
-        Course: { CourseCode: 'D0021N' },
-      },
-      Module_Code: 'M1',
-      Grade: 'VG',
-      Date: '2025-01-19',
-      Status: 'Klarmarkerad',
-    },
-    {
-      Result_Id: 2,
-      Student_Course: {
-        Student_Course_Id: 102,
-        Student: { SSN: '19981212-5678' },
-        Course: { CourseCode: 'D0021N' },
-      },
-      Module_Code: 'M1',
-      Grade: 'G',
-      Date: '2025-01-18',
-      Status: 'Utkast',
-    },
-    {
-      Result_Id: 3,
-      Student_Course: {
-        Student_Course_Id: 103,
-        Student: { SSN: '19970505-1111' },
-        Course: { CourseCode: 'D7001N' },
-      },
-      Module_Code: 'M2',
-      Grade: 'U',
-      Date: '',
-      Status: 'Utkast',
-    },
-    {
-      Result_Id: 4,
-      Student_Course: {
-        Student_Course_Id: 104,
-        Student: { SSN: '19990909-3333' },
-        Course: { CourseCode: 'D7001N' },
-      },
-      Module_Code: 'M2',
-      Grade: 'VG',
-      Date: '2025-01-19',
-      Status: 'Attesterad',
-    },
-    {
-      Result_Id: 5,
-      Student_Course: {
-        Student_Course_Id: 105,
-        Student: { SSN: '19980202-4444' },
-        Course: { CourseCode: 'D0021N' },
-      },
-      Module_Code: 'M1',
-      Grade: 'G',
-      Date: '2025-01-20',
-      Status: 'Klarmarkerad',
-    },
-    {
-      Result_Id: 6,
-      Student_Course: {
-        Student_Course_Id: 106,
-        Student: { SSN: '19980606-2222' },
-        Course: { CourseCode: 'D7001N' },
-      },
-      Module_Code: 'M3',
-      Grade: 'U',
-      Date: '',
-      Status: 'Utkast',
-    },
-    {
-      Result_Id: 7,
-      Student_Course: {
-        Student_Course_Id: 107,
-        Student: { SSN: '20000101-9999' },
-        Course: { CourseCode: 'D0021N' },
-      },
-      Module_Code: 'M1',
-      Grade: '*',
-      Date: '2025-01-22',
-      Status: 'Attesterad',
-    },
-    {
-      Result_Id: 8,
-      Student_Course: {
-        Student_Course_Id: 108,
-        Student: { SSN: '19981111-5555' },
-        Course: { CourseCode: 'D7001N' },
-      },
-      Module_Code: 'M3',
-      Grade: 'VG',
-      Date: '2025-01-23',
-      Status: 'Klarmarkerad',
-    },
-    {
-      Result_Id: 9,
-      Student_Course: {
-        Student_Course_Id: 109,
-        Student: { SSN: '19981230-7777' },
-        Course: { CourseCode: 'D7001N' },
-      },
-      Module_Code: 'M2',
-      Grade: 'G',
-      Date: '2025-01-24',
-      Status: 'Attesterad',
-    },
-    {
-      Result_Id: 10,
-      Student_Course: {
-        Student_Course_Id: 110,
-        Student: { SSN: '19990505-8888' },
-        Course: { CourseCode: 'D0021N' },
-      },
-      Module_Code: 'M1',
-      Grade: 'U',
-      Date: '',
-      Status: 'Utkast',
-    },
-  ];
+  private courses: Course[] = [];
+  private students: Student[] = [];
+  private enrollments: Enrollment[] = [];
 
-  getResults(): Results[] {
-    return this.results;
+  enrollStudents() {
+    for (let student of this.students) {
+      for (let course of this.courses) {
+        const grades: Grades[] = [];
+        for (let module of course.Modules) {
+          grades.push({Module_Code: module.Module_Code, Grade: null, Date: null, Status: null})
+        }
+        const enrollment: Enrollment = {
+          Student: student,
+          Course: course,
+          Grades: grades
+        };
+        this.enrollments.push(enrollment);
+      }
+    }
   }
-}
+
+  constructor(
+    private epok: EpokService,
+    private studentITS: StudentITSService
+  ) {
+
+    this.courses = this.epok.getCourses();
+    this.students = this.studentITS.getStudents();
+    this.enrollStudents();
+  }
+
+  getStudentGradeForModule(courseCode: string, moduleCode: string): any[] {
+    const results: any[] = [];
+    for (let enrollment of this.enrollments) {
+      if (enrollment.Course.CourseCode === courseCode) {
+        const gradeEntry = enrollment.Grades.find(grade => grade.Module_Code === moduleCode);
+        results.push({
+          Student_id: enrollment.Student.Student_id,
+          full_name: `${enrollment.Student.first_name} ${enrollment.Student.last_name}`,
+          Grade: gradeEntry?.Grade,
+          Date: gradeEntry?.Date,
+          Status: gradeEntry?.Status
+        });
+      }
+    }
+    return results;
+  }
+
+  saveGradesForStudentsInModule(
+    updatedStudents: {
+      Student_id: string;
+      Grade: string | null;
+      Date: Date | null;
+      Status: string | null;
+    }[],
+    courseCode: string,
+    moduleCode: string
+  ): void {
+  
+    for (const updatedStudent of updatedStudents) {
+  
+      const enrollment = this.enrollments.find(
+        e =>
+          e.Student.Student_id === updatedStudent.Student_id &&
+          e.Course.CourseCode === courseCode
+      )!;
+
+      console.log(enrollment)
+  
+      const gradeEntry = enrollment.Grades.find(
+        g => g.Module_Code === moduleCode
+      )!;
+
+      gradeEntry.Grade = updatedStudent.Grade;
+      gradeEntry.Date = updatedStudent.Date;
+      gradeEntry.Status = updatedStudent.Status;
+    }
+
+    console.log('Grades saved successfully.');
+  }  
+}  

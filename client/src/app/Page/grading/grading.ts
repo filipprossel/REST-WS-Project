@@ -10,10 +10,9 @@ import { TableModule } from 'primeng/table';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
-import { EpokModule, EpokService } from '../../Services/Epok/epok';
-import { Results, LadokService } from '../../Services/Ladok/ladok';
-import { StudentITS, StudentITSService } from '../../Services/StudentITS/student-its';
 import { FormsModule } from '@angular/forms';
+import { LadokService } from '../../Services/Ladok/ladok';
+import { EpokService } from '../../Services/Epok/epok';
 
 @Component({
   selector: 'app-grading',
@@ -24,27 +23,70 @@ import { FormsModule } from '@angular/forms';
 
 export class Grading implements OnInit {
 
-  courses: EpokModule[] = [];
-  results: Results[] = [];
-  students: StudentITS[] = [];
-  grades = ['U', 'G', 'VG', '*'];
-  status = ['Klarmarkerad', 'Attesterad', 'Förberett'];
+  grades = ['U', 'G', 'VG'];
+  status = ['Klarmarkerad', 'Attesterad'];
+  student: any;
+  allCourseCodes: string[] = [];
+  selectedCourseCode: string | null = null;
+  courseModules: string[] = [];
+  selectedModuleCode: string | null = null;
+  studentsInCourse: any[] = [];
+  selectedStudents: any[] = [];
+
+  onCourseSelected(event: any) {
+    this.courseModules = this.epok.getCourseByCode(this.selectedCourseCode!)?.Modules.map(module => module.Module_Code) || [];
+    this.selectedModuleCode = null;
+    this.selectedStudents = [];
+    this.studentsInCourse = [];
+  }
+
+  onModuleSelected(event: any) {
+    this.studentsInCourse = this.ladok
+    .getStudentGradeForModule(this.selectedCourseCode!, this.selectedModuleCode!)
+    .map((student, index) => ({
+      ...student,
+      id: student.SSN || index  
+    }));
+
+    console.log('Students in course:', this.studentsInCourse);
+    this.selectedStudents = [];
+  }
+  
+  saveSelectedStudents(event: any) {
+    console.log('Selected students:', this.selectedStudents);
+
+    const studentsToUpdate = [];
+
+    for (let student of this.selectedStudents) {
+      if (student.Grade && student.Date && student.selectedStatus) {
+        studentsToUpdate.push({ ...student, Status: student.selectedStatus });
+      } else if (student.selectedStatus && !student.Date && !student.Grade) {
+        continue;
+      } else {
+        studentsToUpdate.push({ ...student, Status: "Utkast" });
+      }
+    }
+
+    this.ladok.saveGradesForStudentsInModule(studentsToUpdate!, this.selectedCourseCode!, this.selectedModuleCode!);
+
+    this.studentsInCourse = this.ladok
+    .getStudentGradeForModule(this.selectedCourseCode!, this.selectedModuleCode!)
+    .map((student, index) => ({
+      ...student,
+      id: student.SSN || index  
+    }));
+
+    console.log('Updated students in course:', this.studentsInCourse);
+    this.selectedStudents = [];
+  }  
 
   constructor(
-    private epok: EpokService,
     private ladok: LadokService,
-    private studentITS: StudentITSService
+    private epok: EpokService
   ) {}
   
   ngOnInit() {
-    console.log('EPOK-kurser:', this.epok.courses);
-    console.log('LADOK-resultat:', this.ladok.getResults);
-    console.log('ITS-studenter:', this.studentITS.students);
-
-    this.courses = this.epok.modules;
-    this.results = this.ladok.getResults();
-    this.students = this.studentITS.students;
+    this.allCourseCodes = this.epok.getCourses().map(course => course.CourseCode);
+    console.log(this.allCourseCodes);
   }
-
-  student: any;
 }
