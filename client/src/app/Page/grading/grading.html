@@ -17,16 +17,8 @@
                             </ng-template>
                         </p-select>
 
-            <p-auto-complete 
-                [dropdown]="true" 
-                [placeholder]="'Välj modul'" 
-            ></p-auto-complete>
-        </div>
-    </div>
+                    </div>
 
-    <div class="card"> 
-        <p-table
-            [rows]="8"
                     <div class="module">
                         <h3>Modul:</h3>
                         <p-select [options]="courseModules" [(ngModel)]="selectedModuleCode" placeholder="Välj modul" emptyMessage="Modul hittades inte" [disabled]="!selectedCourseCode" (onChange)="onModuleSelected($event)">
