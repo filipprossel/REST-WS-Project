@@ -19,15 +19,11 @@ public class DemoApplication implements CommandLineRunner {
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
-
 	@Override
 	public void run(String... args) throws Exception {
 		String sql = "Select * from customers";
 		List<Customer> customers = jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(Customer.class));
 		customers.forEach(System.out :: println);
-		}
+	}
 
 }
-
-
-<!-- -->
