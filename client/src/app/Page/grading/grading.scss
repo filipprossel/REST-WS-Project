@@ -1,0 +1,18 @@
+.dropdowns {
+    display: flex;
+    justify-content: space-around;
+}
+
+.titles > th {
+    background-color: #081235;
+    color: #f4f3f1;
+} 
+
+.card > div {
+    padding-block: 16px;
+}
+
+.card-header {
+    display: grid;
+    place-items: center;
+}
