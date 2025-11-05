@@ -2,15 +2,12 @@ package com.example.demo.Ladok;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
 
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.RestTemplate;
 
 @RestController
@@ -63,28 +60,47 @@ public class Ladok {
                     .body("Ett fel uppstod: " + e.getMessage());
         }
     }
+
+    // hämtar all data från EPOK & ITSstudent för en vald kurs och kursmodul
     @GetMapping("/courses/coursedatafrommodule")
-    public ResponseEntity<?> getCourseData(@RequestParam String courseCode, @RequestParam String module_code) {
+    public ResponseEntity<?> getCourseData(@RequestParam String courseCode, @RequestParam String module_id) {
+
+        HashMap<String, ResponseEntity<Map>> courseDataFromModule = new HashMap<>();
 
         try {
-            String url = "http://localhost:8080/epok/moduledata?courseCode={courseCode}&module_code={module_code}";
+            String url = "http://localhost:8080/epok/moduledata?courseCode={courseCode}&module_code={module_code0}&module_id={module_id}";
 
             Map<String, String> params = Map.of("courseCode", courseCode);
 
-            ResponseEntity<List> response = restTemplate.getForEntity(url, List.class, params);
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class, params);
 
             if(response.getBody().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Kan inte hitta några kurser");
             }
 
-            return ResponseEntity.ok(response.getBody());
+            courseDataFromModule.put("epok", response);
+
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Fel vid anrop till EPOK: " + e.getMessage());
         }
+
+        try {
+            // ITSAdmin
+
+        }catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Fel vid anrop till ITSSTudents: " + e.getMessage());
+        }
+
+        return ResponseEntity.ok(courseDataFromModule);
+
     }
+
+
     @PatchMapping("/courses/gradeModules")
+
     public ResponseEntity<?> patchGradeModules(
         @RequestParam int student_courses_id,
         @RequestParam String module_Code,

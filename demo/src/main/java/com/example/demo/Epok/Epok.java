@@ -21,7 +21,6 @@ public class Epok {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-
     // Hämtar alla moduler till en kurs ex d0019n = [5,6]
     @GetMapping("/course/allmodules")
     public ResponseEntity<?> getModules(@RequestParam String ladok_courseCode) {
@@ -50,12 +49,14 @@ public class Epok {
                     .body("Ett fel uppstod: " + e.getMessage());
         }
     }
+
+    // hämtar all data från epok
     @GetMapping("/course/moduledataforcourse")
     public ResponseEntity<?> getModuleDataForCourse(@RequestParam String course_code, @RequestParam int module_id) {
         try {
 
         String sql = "SELECT * FROM EPOK_modules WHERE course_code = ? AND module_id=?";
-            List<Map<String, Object>> moduleData = jdbcTemplate.queryForList(sql, course_code, module_id);
+            Map<String, Object> moduleData = jdbcTemplate.queryForMap(sql, course_code, module_id);
 
             if(moduleData.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
