@@ -10,13 +10,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.List;
 
 @SpringBootApplication
-public class DemoApplication implements CommandLineRunner {
-
+/* public class DemoApplication implements CommandLineRunner { */
+public class DemoApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(DemoApplication.class, args);
 	}
 
-	@Autowired
+	/* @Autowired
 	private JdbcTemplate jdbcTemplate;
 
 	@Override
@@ -24,6 +24,5 @@ public class DemoApplication implements CommandLineRunner {
 		String sql = "Select * from customers";
 		List<Customer> customers = jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(Customer.class));
 		customers.forEach(System.out :: println);
-	}
-
+	} */
 }

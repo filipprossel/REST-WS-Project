@@ -1,8 +1,7 @@
 package com.example.demo.Ladok;
 
-public class Ladok {
+import org.springframework.web.bind.annotation.GetMapping;
 
-    / getcourses
-        skickar till epok ()
+public class Ladok {
 
 }
