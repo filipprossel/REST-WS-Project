@@ -26,7 +26,8 @@ public class Ladok {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    @GetMapping("/courses/getallcoursecodes")
+    // ger alla kurskoder med deras moduler ex [{"d0019n": ["5","6"].....
+    @GetMapping("/courses/allcoursecodeswithModules")
     public ResponseEntity<?> getAllCourseCodes() {
         try {
             List<String> courseCodes = jdbcTemplate.queryForList(
@@ -37,27 +38,53 @@ public class Ladok {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Kan inte hitta några kurser");
             }
 
-            courseCodes.forEach(System.out::println);
-            return ResponseEntity.ok(courseCodes);
+            RestTemplate restTemplate = new RestTemplate();
+            Map<String, List<String>> result = new HashMap<>();
+
+            for (String courseCode : courseCodes) {
+                try {
+                    ResponseEntity<List> response = restTemplate.getForEntity(
+                            "http://localhost:8080/epok/course/allmodules?ladok_courseCode={code}",
+                            List.class,
+                            courseCode
+                    );
+
+                    if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                        result.put(courseCode, response.getBody());
+                    } else {
+                        result.put(courseCode, Collections.emptyList());
+                    }
+                } catch (Exception e) {
+                    // Om något går fel med EPOK, sätt tom lista
+                    result.put(courseCode, Collections.emptyList());
+                }
+            }
+
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Ett fel uppstod: " + e.getMessage());
         }
     }
-    @GetMapping("/courses/getcoursedata")
+  /*  @GetMapping("/courses/getcoursemoduledata")
     public ResponseEntity<?> getCourseData(@RequestParam String courseCode) {
+        System.out.println(courseCode);
         try {
             String url = "http://localhost:8080/epok/modules?courseCode={courseCode}";
-            var response = restTemplate.getForEntity(url, List.class, Map.of("codes", courseCode));
+
+            Map<String, String> params = Map.of("courseCode", courseCode);
+
+            ResponseEntity<List> response = restTemplate.getForEntity(url, List.class, params);
 
             if(response.getBody().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Kan inte hitta några kurser");
             }
 
-            return response;
+            return ResponseEntity.ok(response.getBody());
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Ett fel uppstod: " + e.getMessage());
+                    .body("Fel vid anrop till EPOK: " + e.getMessage());
         }
-    }
+    } */
 }
