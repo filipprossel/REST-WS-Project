@@ -16,9 +16,9 @@ public class DemoApplication {
 		SpringApplication.run(DemoApplication.class, args);
 	}
 
-	/* @Autowired
+	 @Autowired
 	private JdbcTemplate jdbcTemplate;
-
+/*
 	@Override
 	public void run(String... args) throws Exception {
 		String sql = "Select * from customers";
