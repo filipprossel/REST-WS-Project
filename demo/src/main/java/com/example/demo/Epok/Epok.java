@@ -9,9 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/epok")
@@ -52,4 +50,25 @@ public class Epok {
                     .body("Ett fel uppstod: " + e.getMessage());
         }
     }
+    @GetMapping("/course/moduledataforcourse")
+    public ResponseEntity<?> getModuleDataForCourse(@RequestParam String course_code, @RequestParam int module_id) {
+        try {
+
+        String sql = "SELECT * FROM EPOK_modules WHERE course_code = ? AND module_id=?";
+            List<Map<String, Object>> moduleData = jdbcTemplate.queryForList(sql, course_code, module_id);
+
+            if(moduleData.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Ingen data kunde hittas för vald kurs och modul");
+            }
+
+            return  ResponseEntity.ok(moduleData);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ett fel uppstod: " + e.getMessage());
+        }
+    }
+
+
 }
