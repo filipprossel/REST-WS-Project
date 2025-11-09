@@ -50,7 +50,7 @@ public class Epok {
         }
     }
 
-    // hämtar all data från epok
+    // hämtar all data från epok frö vald kurs och modul
     @GetMapping("/course/moduledataforcourse")
     public ResponseEntity<?> getModuleDataForCourse(@RequestParam String course_code, @RequestParam int module_id) {
         try {
