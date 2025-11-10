@@ -7,6 +7,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 
 import Aura from '@primeuix/themes/aura';
 import { definePreset } from '@primeuix/themes';
+import { provideHttpClient } from '@angular/common/http';
 
 
 const Noir = definePreset(Aura, {
@@ -64,6 +65,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideAnimations(),
+    provideHttpClient(),
     providePrimeNG({
         theme: {
             preset: Noir,

@@ -34,7 +34,7 @@ public class Epok {
                         .body("Ingen kurskod hittades för: " + ladok_courseCode);
             }
 
-            String moduleSQL = "SELECT module_id FROM EPOK_modules WHERE course_code = ?";
+            String moduleSQL = "SELECT module_code FROM EPOK_modules WHERE course_code = ?";
             List<String> modules = jdbcTemplate.queryForList(moduleSQL, String.class, ladok_courseCode);
 
             if (modules.isEmpty()) {
@@ -52,11 +52,11 @@ public class Epok {
 
     // hämtar all data från epok frö vald kurs och modul
     @GetMapping("/course/moduledataforcourse")
-    public ResponseEntity<?> getModuleDataForCourse(@RequestParam String course_code, @RequestParam int module_id) {
+    public ResponseEntity<?> getModuleDataForCourse(@RequestParam String course_code, @RequestParam int module_code) {
         try {
 
-        String sql = "SELECT * FROM EPOK_modules WHERE course_code = ? AND module_id=?";
-            Map<String, Object> moduleData = jdbcTemplate.queryForMap(sql, course_code, module_id);
+        String sql = "SELECT * FROM EPOK_modules WHERE course_code = ? AND module_code=?";
+            Map<String, Object> moduleData = jdbcTemplate.queryForMap(sql, course_code, module_code);
 
             if(moduleData.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)

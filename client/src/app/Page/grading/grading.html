@@ -1,4 +1,4 @@
-<main>
+<main >
     <div class="card">
         <div class="card-header">
             <h1>Betygsättning</h1>
@@ -11,7 +11,7 @@
                     <div class="coursecode">
                         <h3>Kurskod:</h3>
 
-                        <p-select [options]="allCourseCodes" [(ngModel)]="selectedCourseCode" placeholder="Välj kurskod" [filter]="true" (onChange)="onCourseSelected($event)" emptyMessage="Kurs hittades inte">
+                        <p-select [options]="allCourseCodes2" [(ngModel)]="selectedCourseCode" placeholder="Välj kurskod" [filter]="true" (onChange)="onCourseSelected($event)" emptyMessage="Kurs hittades inte">
                             <ng-template #selectedItem let-selectedOption>
                                 <div>{{ selectedOption }}</div>
                             </ng-template>
@@ -21,7 +21,7 @@
 
                     <div class="module">
                         <h3>Modul:</h3>
-                        <p-select [options]="courseModules" [(ngModel)]="selectedModuleCode" placeholder="Välj modul" emptyMessage="Modul hittades inte" [disabled]="!selectedCourseCode" (onChange)="onModuleSelected($event)">
+                        <p-select [options]="courseModulesFromSelectedCourse()" [(ngModel)]="selectedModuleCode" placeholder="Välj modul" emptyMessage="Modul hittades inte" [disabled]="!selectedCourseCode" (onChange)="onModuleSelected($event)">
                             <ng-template #selectedItem let-selectedOption>
                                 <div>{{ selectedOption }}</div>
                             </ng-template>
@@ -34,7 +34,7 @@
                         [rows]="8"
                         [paginator]="true"
                         [globalFilterFields]="['name','grade_ladok','status']"    
-                        [value]="studentsInCourse"
+                        [value]="studentsInCourseData"
                         [(selection)]="selectedStudents"
                         dataKey="id"
                     >
@@ -54,14 +54,14 @@
                         <tr>
                             <th></th>
                             <th>
-                                <p-columnFilter type="text" field="full_name" placeholder="Sök namn" filterOn="input" [matchMode]="'contains'"></p-columnFilter>
+                                <p-columnFilter type="text" field="first_name" placeholder="Sök namn" filterOn="input" [matchMode]="'contains'"></p-columnFilter>
                             </th>
                             <th>
-                                <p-columnFilter type="text" field="Grade" placeholder="Sök betyg" filterOn="input"></p-columnFilter>
+                                <p-columnFilter type="text" field="grade" placeholder="Sök betyg" filterOn="input"></p-columnFilter>
                             </th>
                             <th></th>
                             <th>
-                                <p-columnFilter type="text" field="Status" placeholder="Sök status" filterOn="input"></p-columnFilter>
+                                <p-columnFilter type="text" field="status" placeholder="Sök status" filterOn="input"></p-columnFilter>
                             </th>
                             <th></th>
                         </tr>
@@ -70,51 +70,34 @@
 
                     <ng-template #body let-studentModule>
                         
-                    @if (studentModule.Status == "Utkast" || studentModule.Status == null) {
-                        <tr>
+                   
+                  @if (studentModule.isEditable) {
+                    <tr>
+
+                    <td><p-tableCheckbox [value]="studentModule" /></td>
+                            <td>{{ studentModule.first_name }} {{ studentModule.last_name }}</td>
                             <td>
-                                <p-tableCheckbox [value]="studentModule" />
+                                <p-select [options]="grades" [(ngModel)]="studentModule.grade" [placeholder]="studentModule.grade || 'Betyg'" appendTo="body"></p-select>
                             </td>
-                            <td>{{ studentModule.full_name }}</td>
-
-                            @if (studentModule.Grade != null) {
-                                <td>
-                                    <p-select [options]="grades" [(ngModel)]="studentModule.Grade" [placeholder]="studentModule.Grade"  appendTo="body"></p-select>
-                                </td>
-                            } @else {
-                                <td>
-                                    <p-select [options]="grades" [(ngModel)]="studentModule.Grade" placeholder="Betyg" appendTo="body"></p-select>
-                                </td>
-                            }
-
-                            @if (studentModule.Date != null) {
-                                <td>
-                                    <p-date-picker [(ngModel)]="studentModule.Date" appendTo="body" [showIcon]="true" [placeholder]="studentModule.Date"></p-date-picker>
-                                </td>
-                            } @else {
-                                <td>
-                                    <p-date-picker [(ngModel)]="studentModule.Date" appendTo="body" [showIcon]="true" placeholder="Datum"></p-date-picker>
-                                </td>
-                            }
                             <td>
-
-                            @if (studentModule.Status != null) {
-                                <p-select [options]="status" [(ngModel)]="studentModule.selectedStatus" [placeholder]="studentModule.Status" appendTo="body"></p-select>
-                            } @else {
-                                <p-select [options]="status" [(ngModel)]="studentModule.selectedStatus" placeholder="Status" appendTo="body"></p-select>
-                            }   
+                                <p-date-picker [(ngModel)]="studentModule.date" appendTo="body" [showIcon]="true" [placeholder]="studentModule.date || 'Datum'"></p-date-picker>
+                            </td>
+                            <td>
+                                <!-- Status med stort S för att skilja på ursprugligt värdr och det hålla tr editabl -->
+                                <p-select [options]="status" [(ngModel)]="studentModule.Status" [placeholder]="studentModule.status || 'Status'" appendTo="body"></p-select>
+                            </td>
                             <td>
                                 <input type="text" pInputText [(ngModel)]="studentModule.infoText" placeholder="Notering..." />
                             </td>
-                        </tr>
+                            </tr>
                     }
                     @else {
                         <tr>
                             <td></td>
-                            <td>{{ studentModule.full_name }} {{ studentModule.last_name }}</td>
-                            <td>{{ studentModule.Grade }}</td>
-                            <td>{{ studentModule.Date}}</td>
-                            <td>{{ studentModule.Status }}</td>
+                            <td>{{ studentModule.first_name }} {{ studentModule.last_name }}</td>
+                            <td>{{ studentModule.grade }}</td>
+                            <td>{{ studentModule.date}}</td>
+                            <td>{{ studentModule.status }}</td>
                             <td></td>
                         </tr> 
                     }
