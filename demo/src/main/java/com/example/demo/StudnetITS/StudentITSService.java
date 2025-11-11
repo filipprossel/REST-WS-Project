@@ -8,7 +8,7 @@ import java.util.ArrayList;
 @Service
 public class StudentITSService {
     @Autowired
-    StudentITSRepository studentITSRepository;
+    StudentITSRepos itory studentITSRepository;
 
     public ArrayList<StudentITSStudent> findStudentsBySSN(ArrayList<String> listSSN){
         ArrayList<StudentITSStudent> studentList = new ArrayList<>();

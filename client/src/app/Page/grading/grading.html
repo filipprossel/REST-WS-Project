@@ -80,7 +80,7 @@
                                 <p-select [options]="grades" [(ngModel)]="studentModule.grade" [placeholder]="studentModule.grade || 'Betyg'" appendTo="body"></p-select>
                             </td>
                             <td>
-                                <p-date-picker [(ngModel)]="studentModule.date" appendTo="body" [showIcon]="true" [placeholder]="studentModule.date || 'Datum'"></p-date-picker>
+                                <p-date-picker [(ngModel)]="studentModule.date" appendTo="body" [showIcon]="true" [placeholder]=" studentModule.date.split('T')[0] || 'Datum'"></p-date-picker>
                             </td>
                             <td>
                                 <!-- Status med stort S för att skilja på ursprugligt värdr och det hålla tr editabl -->
@@ -96,7 +96,7 @@
                             <td></td>
                             <td>{{ studentModule.first_name }} {{ studentModule.last_name }}</td>
                             <td>{{ studentModule.grade }}</td>
-                            <td>{{ studentModule.date}}</td>
+                            <td>{{ studentModule.date.split("T")[0]}}</td>
                             <td>{{ studentModule.status }}</td>
                             <td></td>
                         </tr> 
