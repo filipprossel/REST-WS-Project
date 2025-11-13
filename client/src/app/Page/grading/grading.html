@@ -4,6 +4,11 @@
             <h1>Betygsättning</h1>
         </div>
 
+        @if (currentUploadState != null) {
+            <div class="message">
+                <p-message [severity]="currentUploadState">{{ uploadMessage }}</p-message>
+            </div>
+        }
 
         <div class="card-body">
             <div class="wrapper">
@@ -11,7 +16,7 @@
                     <div class="coursecode">
                         <h3>Kurskod:</h3>
 
-                        <p-select [options]="allCourseCodes2" [(ngModel)]="selectedCourseCode" placeholder="Välj kurskod" [filter]="true" (onChange)="onCourseSelected($event)" emptyMessage="Kurs hittades inte">
+                        <p-select [options]="allCourseCodes" [(ngModel)]="selectedCourseCode" placeholder="Välj kurskod" [filter]="true" (onChange)="courseCodeSelected()" emptyMessage="Kurs hittades inte">
                             <ng-template #selectedItem let-selectedOption>
                                 <div>{{ selectedOption }}</div>
                             </ng-template>
@@ -21,7 +26,7 @@
 
                     <div class="module">
                         <h3>Modul:</h3>
-                        <p-select [options]="courseModulesFromSelectedCourse()" [(ngModel)]="selectedModuleCode" placeholder="Välj modul" emptyMessage="Modul hittades inte" [disabled]="!selectedCourseCode" (onChange)="onModuleSelected($event)">
+                        <p-select [options]="availableModules" [(ngModel)]="selectedModuleCode" placeholder="Välj modul" emptyMessage="Modul hittades inte" [disabled]="!selectedCourseCode" (onChange)="moduleSelected()">
                             <ng-template #selectedItem let-selectedOption>
                                 <div>{{ selectedOption }}</div>
                             </ng-template>
@@ -33,12 +38,11 @@
                     <p-table
                         [rows]="8"
                         [paginator]="true"
-                        [globalFilterFields]="['name','grade_ladok','status']"    
-                        [value]="studentsInCourseData"
+                        [globalFilterFields]="['name','grade','status']"    
+                        [value]="students"
                         [(selection)]="selectedStudents"
                         dataKey="id"
                     >
-
                     <ng-template #header>
                         <tr class="titles" style="background-color: #081235;">
                             <th style="width: 4rem">
@@ -77,14 +81,14 @@
                     <td><p-tableCheckbox [value]="studentModule" /></td>
                             <td>{{ studentModule.first_name }} {{ studentModule.last_name }}</td>
                             <td>
-                                <p-select [options]="grades" [(ngModel)]="studentModule.grade" [placeholder]="studentModule.grade || 'Betyg'" appendTo="body"></p-select>
+                                <p-select [options]="grades" [(ngModel)]="studentModule.newGrade" [placeholder]="studentModule.grade || 'Betyg'" appendTo="body"></p-select>
                             </td>
                             <td>
-                                <p-date-picker [(ngModel)]="studentModule.date" appendTo="body" [showIcon]="true" [placeholder]=" studentModule.date.split('T')[0] || 'Datum'"></p-date-picker>
+                                <p-date-picker [(ngModel)]="studentModule.newDate" appendTo="body" [showIcon]="true" [placeholder]="(studentModule.date | date: 'dd/MM/yyyy') || 'Datum'"></p-date-picker>
                             </td>
                             <td>
                                 <!-- Status med stort S för att skilja på ursprugligt värdr och det hålla tr editabl -->
-                                <p-select [options]="status" [(ngModel)]="studentModule.Status" [placeholder]="studentModule.status || 'Status'" appendTo="body"></p-select>
+                                <p-select [options]="status" [(ngModel)]="studentModule.newStatus" [placeholder]="studentModule.status || 'Status'" appendTo="body"></p-select>
                             </td>
                             <td>
                                 <input type="text" pInputText [(ngModel)]="studentModule.infoText" placeholder="Notering..." />
@@ -96,7 +100,7 @@
                             <td></td>
                             <td>{{ studentModule.first_name }} {{ studentModule.last_name }}</td>
                             <td>{{ studentModule.grade }}</td>
-                            <td>{{ studentModule.date.split("T")[0]}}</td>
+                            <td>{{ studentModule.date | date: "dd/MM/yyyy"}}</td>
                             <td>{{ studentModule.status }}</td>
                             <td></td>
                         </tr> 

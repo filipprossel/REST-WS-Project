@@ -11,140 +11,141 @@ import { AutoCompleteModule } from 'primeng/autocomplete';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { FormsModule } from '@angular/forms';
-import { LadokService } from '../../Services/Ladok/ladok';
-import { EpokService } from '../../Services/Epok/epok';
+import { Message } from 'primeng/message';
 import { LadokAPIService } from '../../Services/api/ladok-apiservice';
-import { single } from 'rxjs';
+
+
+type primeNgSeverity = "success" | "error" | "info" | "warn" | "secondary" | "contrast" | null | undefined;
 
 @Component({
   selector: 'app-grading',
-  imports: [TagModule, IconFieldModule, InputIconModule, InputTextModule, MultiSelectModule, CommonModule, TableModule, AutoCompleteModule, ButtonModule, DatePickerModule, FormsModule, Select],
+  imports: [TagModule, Message, IconFieldModule, InputIconModule, InputTextModule, MultiSelectModule, CommonModule, TableModule, AutoCompleteModule, ButtonModule, DatePickerModule, FormsModule, Select],
   templateUrl: './grading.html',
   styleUrl: './grading.scss',
 })
 
 export class Grading implements OnInit {
+  allCourseCodes: string[]= [];
+  selectedCourseCode: string = '';
 
-  grades = ['U', 'G', 'VG'];
-  status = ['Klarmarkerad', 'Attesterad'];
-  student: any;
-  allCourseCodes: string[] = [];
-  selectedCourseCode: string | null = null;
-  courseModules: string[] = [];
-  selectedModuleCode: string | null = null;
-  studentsInCourse: any[] = [];
+  availableModules: string[] = [];
+  selectedModuleCode: string = '';
+
+  students: any[] = [];
   selectedStudents: any[] = [];
 
-  onCourseSelected(event: any) {
-    this.courseModules = this.epok.getCourseByCode(this.selectedCourseCode!)?.Modules.map(module => module.Module_Code) || [];
-    this.selectedModuleCode = null;
-    this.selectedStudents = [];
-    this.studentsInCourse = [];
-  }
+  grades: string[] = [];
+  status: string[] = ['Klarmarkerad', 'Attesterat'];
 
-  onModuleSelected(event: any) {
-    this.studentsInCourse = this.ladok
-    .getStudentGradeForModule(this.selectedCourseCode!, this.selectedModuleCode!)
-    .map((student, index) => ({
-      ...student,
-      id: student.SSN || index  
-    }));
-
-    console.log('Students in course:', this.studentsInCourse);
-    this.selectedStudents = [];
-
-  // nytt 
-    this.ladokAPI.getStudents(this.selectedCourseCode!, this.selectedModuleCode!);
-
-  }
-  
-
-  saveSelectedStudents() {
-  const studentsToUpdate = this.selectedStudents
-    .filter(student => student.grade || student.date || student.Status)
-    .map(student => ({
-      student_courses_id: student.student_courses_id,
-      module_Code: this.selectedModuleCode!,
-      grade: student.grade ?? null,
-      date: student.date
-        ? new Date(student.date).toISOString().substring(0, 19)
-        : null,
-      status: student.Status ?? "Utkast",
-    }));
-
-  if (studentsToUpdate.length === 0) {
-    console.log('Inga studenter valda.');
-    return;
-  }
-
-  this.ladokAPI.updateResult(studentsToUpdate).subscribe({
-    next: (response) => {
-      console.log('Betyg uppdaterade:', response);
-
-      this.selectedStudents = [...[]];
-
-      this.ladokAPI.getStudents(this.selectedCourseCode!, this.selectedModuleCode!);
-    },
-    error: (err) => {
-      console.error('Fel vid uppdatering:', err);
-    },
-  });
-}
-
-
+  currentUploadState: primeNgSeverity = null;
+  uploadMessage: string = '';
 
 
   constructor(
-    private ladok: LadokService,
-    private epok: EpokService,
-    private ladokAPI: LadokAPIService
-  ) {}
+    private LadokAPI: LadokAPIService,
+  ) {
+    effect(() => {
+      this.loadCourseDate();
 
-  coursesAndModules!: Record<string, string[]>; 
-  allcourseCode!: any[];
-
-  ngOnInit() {
-    this.ladokAPI.initialLoad();
-
-    console.log(this.coursesAndModules)
-
-    // epok data
-    this.allCourseCodes = this.epok.getCourses().map(course => course.CourseCode);
-    console.log(this.allCourseCodes);
-
+      this.updateStudentsList();
+      this.updateModuleInfo();
+    });
   }
 
-
-  get courseAndModulesEPok() {
-    return this.ladokAPI.courseAndModules()["epok"]; // hämtar signalvärdet epok
+  ngOnInit(): void {
+    this.LadokAPI.initialLoad()
   }
 
-
-  get allCourseCodes2() {
-    const courses = this.ladokAPI.courseAndModules();
-    return Object.keys(courses)
+  updateModuleInfo() {
+    const courseData = this.LadokAPI.selectedCourseAndModuleData();
+    const moduleData = courseData?.["epok"];
+    const moduleObject = moduleData as unknown as { description: string } | undefined;
+    this.grades = moduleObject?.description?.split(' ') ?? [];
   }
 
-  courseModulesFromSelectedCourse(): any[] {
-    const courses = this.ladokAPI.courseAndModules();
-    // console.log(courses)
-    return  courses[this.selectedCourseCode??  ""] || []
+  updateStudentsList() {
+    const courseData = this.LadokAPI.selectedCourseAndModuleData();
+    const studentData = courseData?.["studentITS"] ?? [];
+
+    console.log('Uppdaterar studentlista med data:', studentData);
+
+    studentData.forEach(student => {
+      this.students.push({
+        ...student,
+        id: student.ssn,
+        isEditable: student.status === 'Utkast' || !student.status,
+      })
+    })
   }
 
-
-
-
-    get studentsInCourseData(): any {
-    const data = this.ladokAPI.selectedCourseAndModuleData();
-
-      const students = data?.["studentITS"] ?? [];
-
-        students.forEach(d => {
-        d.isEditable = d.status === 'Utkast' || !d.status;
-      });
-
-        // console.log(data["studentITS"])
-        return data["studentITS"]
+  loadCourseDate() {
+    this.allCourseCodes = Object.keys(this.LadokAPI.courseAndModules());
   }
 
+  courseCodeSelected() {
+    this.selectedModuleCode = '';
+    this.students = [];
+    this.availableModules = this.LadokAPI.courseAndModules()[this.selectedCourseCode] || [];
+  }
+
+  moduleSelected() {
+    this.students = [];
+    this.LadokAPI.getStudents(this.selectedCourseCode!, this.selectedModuleCode!);
+  }
+
+  saveSelectedStudents() {
+
+    const studentsToUpdate = this.selectedStudents.map(student => {
+      this.currentUploadState = 'info';
+      this.uploadMessage = 'Uppdaterar studenter...';
+
+      student.grade = student.newGrade || student.grade || null
+      student.date = student.newDate || student.date || null
+
+      if (student.grade && student.date) {
+        student.status = student.newStatus || student.status || 'Utkast'
+      } else {
+        student.status = 'Utkast'
+      }
+
+      student.isEditable = student.status === 'Utkast' || !student.status
+
+      return {
+        student_courses_id: student.student_courses_id,
+        module_code: this.selectedModuleCode,
+        result_id: student.result_id,
+        grade: student.grade,
+        date: student.date,
+        status: student.status,
+      }
+    });
+
+    this.selectedStudents = [];
+
+
+    if (studentsToUpdate.length === 0) {
+      console.log('Inga studenter valda.');
+      return;
+    }
+
+    this.LadokAPI.updateResult(studentsToUpdate).subscribe({
+      
+      next: (res) => {
+        console.log('Uppdatering lyckades:', res);
+        this.currentUploadState = 'success';
+        this.uploadMessage = 'Uppdatering lyckades!';
+
+      },
+      error: (err) => {
+        console.error('Uppdatering misslyckades:', err);
+        this.currentUploadState = 'error';
+        this.uploadMessage = 'Uppdatering misslyckades.';
+      }
+    });
+
+    setTimeout(() => {
+      this.currentUploadState = null;
+      this.uploadMessage = '';
+    }, 3000);
+  }
 }

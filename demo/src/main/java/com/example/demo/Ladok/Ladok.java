@@ -165,29 +165,37 @@ public class Ladok {
                 // För nu bara modulens betyg, kan anpassas om du vill ha alla betyg
                 Map<String, Object> ladokResult = new HashMap<>();
                 for (Integer studentCourseId : courseIds) {
+
+                    System.out.println("Kollar student_courses_id: " + studentCourseId + " för modul: " + module_code);
+                    itsStudent.put("student_courses_id", studentCourseId);
+
+
                     try {
                         Map<String, Object> result = jdbcTemplate.queryForObject(
-                                "SELECT grade, date, status FROM LADOK_results WHERE student_courses_id = ? AND module_code = ?",
+                                "SELECT grade, date, status, result_id FROM LADOK_results WHERE student_courses_id = ? AND module_code = ?",
                                 new Object[]{studentCourseId, module_code},
                                 (rs, rowNum) -> Map.of(
                                         "grade", rs.getString("grade"),
                                         "date", rs.getObject("date"),
-                                        "status", rs.getString("status")
+                                        "status", rs.getString("status"),
+                                        "result_id", rs.getInt("result_id")
                                 )
                         );
                         if (result != null) {
                             ladokResult.putAll(result);
-                            itsStudent.put("student_courses_id", studentCourseId); // koppla rätt student_courses_id
                             break; // ta första träffen
                         }
-                    } catch (EmptyResultDataAccessException ex) {
-                        // ingen rad för denna modul, fortsätt
+                    } catch (Exception e) {
+                        // Ignorera om inget resultat hittas för denna student_courses_id
+                        System.out.println("Inget resultat hittades för student_courses_id: " + studentCourseId + " och modul: " + module_code);
                     }
                 }
+
 
                 itsStudent.put("grade", ladokResult.get("grade"));
                 itsStudent.put("date", ladokResult.get("date"));
                 itsStudent.put("status", ladokResult.get("status"));
+                itsStudent.put("result_id", ladokResult.get("result_id"));
             }
 
             courseDataFromModule.put("studentITS", filteredITS);
@@ -202,36 +210,60 @@ public class Ladok {
 
     public static class GradeModuleDTO {
         public int student_courses_id;
-        public String module_Code;
+        public String module_code;
+        public Integer result_id;
         public String grade;
         public LocalDateTime date;
         public String status;
+
+        @Override
+        public String toString() {
+            return "GradeModuleDTO{" +
+                    "student_courses_id=" + student_courses_id +
+                    ", module_code='" + module_code + '\'' +
+                    ", result_id=" + result_id +
+                    ", grade='" + grade + '\'' +
+                    ", date=" + date +
+                    ", status='" + status + '\'' +
+                    '}';
+        }
     }
 
     @PostMapping("/courses/grademodule")
     public ResponseEntity<?> patchGradeModules(@RequestBody List<GradeModuleDTO> gradeModules) {
         try {
-            String sql = "UPDATE LADOK_results SET grade=?, date=?, status=? WHERE student_courses_id=? AND module_code=?";
 
-            int updatedCount = 0;
+            String insertQuery = "INSERT INTO LADOK_results (student_courses_id, module_code, grade, date, status) VALUES (?, ?, ?, ?, ?)";
+            String updateQuery = "UPDATE LADOK_results SET grade=?, date=?, status=? WHERE result_id=?";
+
+            int totalRowsAffected = 0;
 
             for (GradeModuleDTO gm : gradeModules) {
-                int numOfUpdateRows = jdbcTemplate.update(sql, gm.grade, gm.date, gm.status, gm.student_courses_id, gm.module_Code);
-                updatedCount += numOfUpdateRows;
+
+                System.out.println(gm);
+
+                if (gm.result_id == null) { // Om inte result finns, skapa en ny
+                    System.out.println("Infogar ny rad för student_courses_id: " + gm.student_courses_id);
+                    totalRowsAffected += jdbcTemplate.update(insertQuery, gm.student_courses_id, gm.module_code, gm.grade, gm.date, gm.status);
+                    System.out.println("Infogade ny rad för student_courses_id: " + gm.student_courses_id);
+                } else { // Annars uppdatera befintlig rad
+                    System.out.println("Uppdaterar result_id: " + gm.result_id);
+                    totalRowsAffected += jdbcTemplate.update(updateQuery, gm.grade, gm.date, gm.status, gm.result_id);
+                    System.out.println("Uppdaterade result_id: " + gm.result_id);
+                }
             }
 
-            System.out.println(updatedCount);
+            System.out.println("Uppdaterade rader: " + totalRowsAffected);
 
-            if (updatedCount == 0) {
+            if (totalRowsAffected == 0) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("404: Inga resultat hittades. En eller flera studenter/moduler kunde inte hittas.");
             }
 
-            return ResponseEntity.ok(Map.of("message", "Betyg uppdaterade", "updatedCount", updatedCount));
+            return ResponseEntity.ok(Map.of("message", "Betyg uppdaterade", "updatedCount", totalRowsAffected));
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Fel vid registreringen", "message", e.getMessage()));
+                    .body("Ett fel uppstod vid uppdatering av betyg: " + e.getMessage());
         }
     }
 }
